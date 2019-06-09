@@ -62,7 +62,7 @@ public class ExampleListener implements Listener {
 				prev.getUses(),prev.getMaxUses(),true,prev.getVillagerExperience(),prev.getPriceMultiplier());
 		List<ItemStack> ingredients = new ArrayList<ItemStack>();
 		ingredients.add(new ItemStack(Material.getMaterial(Template.archivedshufflelist.get(Template.r.nextInt(Template.archivedshufflelist.size()))),Template.randomizeAmount()));
-		while (Template.r.nextInt(10)==0) {
+		if (Template.r.nextInt(10)==0) {
 			ingredients.add(new ItemStack(Material.getMaterial(Template.archivedshufflelist.get(Template.r.nextInt(Template.archivedshufflelist.size()))),Template.randomizeAmount()));
 		}
 		newRecipe.setIngredients(ingredients);
