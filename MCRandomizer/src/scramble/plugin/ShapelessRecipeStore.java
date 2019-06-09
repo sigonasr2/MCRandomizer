@@ -14,7 +14,7 @@ public class ShapelessRecipeStore implements RecipeStore{
 
 	@Override
 	public void createRecipe() {
-		ShapelessRecipe sr = new ShapelessRecipe(new ItemStack(Material.getMaterial(finalItem)));
+		ShapelessRecipe sr = new ShapelessRecipe(new ItemStack(Material.getMaterial(finalItem),Template.randomizeAmount()));
 		for (int i=0;i<craftingitems.size();i++) {
 			sr.addIngredient(Material.getMaterial(craftingitems.get(i)));
 			Bukkit.getLogger().info("  Added ingredient "+craftingitems.get(i));

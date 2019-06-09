@@ -24,7 +24,7 @@ public class ShapedRecipeStore implements RecipeStore{
 
 	@Override
 	public void createRecipe() {
-		ShapedRecipe sr = new ShapedRecipe(new ItemStack(Material.getMaterial(finalItem)));
+		ShapedRecipe sr = new ShapedRecipe(new ItemStack(Material.getMaterial(finalItem),Template.randomizeAmount()));
 		sr.shape(shape);
 		for (Character c : ingredientsMap.keySet()) {
 			MaterialChoice m = ingredientsMap.get(c);

@@ -16,9 +16,14 @@ import java.util.logging.Logger;
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.Server;
 import org.bukkit.World;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.entity.Blaze;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Monster;
 import org.bukkit.inventory.BlastingRecipe;
 import org.bukkit.inventory.CampfireRecipe;
 import org.bukkit.inventory.FurnaceRecipe;
@@ -45,7 +50,7 @@ public class Template
 {
   public static final String CHAT_PREFIX = ChatColor.AQUA + "Scrambled Recipes";
   
-  private static Template plugin;
+  static Template plugin;
   
   public static List<String> craftingrecipes;
   
@@ -53,12 +58,17 @@ public class Template
   
   public static List<RecipeStore> recipeStorage;
   public static List<String> shufflelist;
+  public static List<String> archivedshufflelist;
   public static List<ItemStack> shufflelist2;
+  public static HashMap<EntityType,EntityType> breedingTable = new HashMap<EntityType,EntityType>();
   public static boolean enableRecipeModifications = false;
+  public static HashMap<EntityType,List<ItemStack>> monsterDropTable = new HashMap<EntityType,List<ItemStack>>();
+  public static HashMap<String,FurnaceRecipeStore> furnaceRecipeTables = new HashMap<String,FurnaceRecipeStore>();
   
   PluginDescriptionFile pdfFile;
   
   public static Random r;
+  public static int randomChance=10; //Chance of a random drop.
   
   public static Template getPlugin()
   {
@@ -73,6 +83,21 @@ public class Template
       ReadIntoList(f2, smeltingrecipes);
       plugin.getLogger().info("Loaded " + craftingrecipes.size() + " crafting entries, " + smeltingrecipes.size() + " furnace entries.");
       String shape;
+      for (String s : smeltingrecipes) {
+    	  String[] split = s.split(",");
+    	  //FurnaceRecipe rec = new FurnaceRecipe(new NamespacedKey(plugin,"furnace"),new ItemStack(Material.getMaterial(name)));
+    	  if (furnaceRecipeTables.containsKey(split[1])) {
+    		  FurnaceRecipeStore frs = furnaceRecipeTables.get(split[1]);
+    		  frs.craftingitems.add(Material.getMaterial(split[0]));
+    		  furnaceRecipeTables.put(split[1], frs);
+    	  } else {
+        	  FurnaceRecipeStore frs = new FurnaceRecipeStore();
+    		  furnaceRecipeTables.put(split[1],frs);
+    		  frs.craftingitems.add(Material.getMaterial(split[0]));
+        	  recipeStorage.add(frs);
+        	  shufflelist.add(split[1]);
+    	  }
+      }
       for (String s : craftingrecipes)
       {
         String temp = s.substring(0, s.indexOf(","));
@@ -129,7 +154,8 @@ public class Template
       }
       
       plugin.getLogger().info("Creating recipes...");
-      while (shufflelist.size() > 0)
+      archivedshufflelist.addAll(shufflelist);
+      while (shufflelist.size()>0)
       {
         Integer numb = Integer.valueOf(r.nextInt(recipeStorage.size()));
         RecipeStore rs = (RecipeStore)recipeStorage.get(numb.intValue());
@@ -145,9 +171,59 @@ public class Template
         shufflelist.remove(0);
         recipeStorage.remove(rs);
       }
+      plugin.getLogger().info("Shuffling monster drops...");
+      shufflelist.addAll(archivedshufflelist);
+      EntityType[] monsterTypeList = new EntityType[]{
+    		  EntityType.BLAZE,
+    		  EntityType.CAVE_SPIDER,
+    		  EntityType.CREEPER,
+    		  EntityType.DROWNED,
+    		  EntityType.ELDER_GUARDIAN,
+    		  EntityType.ENDERMAN,
+    		  EntityType.ENDERMITE,
+    		  EntityType.EVOKER,
+    		  EntityType.GUARDIAN,
+    		  EntityType.HUSK,
+    		  EntityType.ILLUSIONER,
+    		  EntityType.PIG_ZOMBIE,
+    		  EntityType.PILLAGER,
+    		  EntityType.RAVAGER,
+    		  EntityType.SILVERFISH,
+    		  EntityType.SKELETON,
+    		  EntityType.SPIDER,
+    		  EntityType.STRAY,
+    		  EntityType.VEX,
+    		  EntityType.VINDICATOR,
+    		  EntityType.WITCH,
+    		  EntityType.WITHER,
+    		  EntityType.ZOMBIE,
+    		  EntityType.ZOMBIE_VILLAGER,
+      };
+      while (shufflelist.size()>0) {
+    	  EntityType pick = monsterTypeList[r.nextInt(monsterTypeList.length)];
+    	  ItemStack it = new ItemStack(Material.getMaterial(shufflelist.get(0)));
+    	  if (monsterDropTable.containsKey(pick)) {
+    		  List<ItemStack> addTable = monsterDropTable.get(pick);
+    		  addTable.add(it);
+    		  monsterDropTable.put(pick, addTable);
+    	  } else {
+    		  List<ItemStack> addTable = new ArrayList<ItemStack>();
+    		  addTable.add(it);
+    		  monsterDropTable.put(pick, addTable);
+    	  }
+    	  shufflelist.remove(0);
+      }
       plugin.getLogger().info("Done! All recipes shuffled!");
     }
   }
+
+	public static int randomizeAmount() {
+		int counter=1;
+		while (Template.r.nextInt(4)==0) {
+			counter++;
+		}
+		return counter;
+	}
   
   private static void ReadIntoList(File f, List<String> list)
   {
@@ -182,12 +258,48 @@ public class Template
 	  Bukkit.addRecipe(sr);
   }
   
+  public void setBreedingTable() {
+	  List<EntityType> canBreed = new ArrayList<EntityType>();
+	  canBreed.addAll(Arrays.asList(new EntityType[]{
+			  EntityType.HORSE,
+			  EntityType.VILLAGER,
+			  EntityType.CAT,
+			  EntityType.CHICKEN,
+			  EntityType.COW,
+			  EntityType.DONKEY,
+			  EntityType.FOX,
+			  EntityType.LLAMA,
+			  EntityType.MULE,
+			  EntityType.MUSHROOM_COW,
+			  EntityType.OCELOT,
+			  EntityType.PANDA,
+			  EntityType.PARROT,
+			  EntityType.PIG,
+			  EntityType.POLAR_BEAR,
+			  EntityType.RABBIT,
+			  EntityType.SHEEP,
+			  EntityType.SKELETON_HORSE,
+			  EntityType.TURTLE,
+			  EntityType.VILLAGER,
+			  EntityType.WANDERING_TRADER,
+			  EntityType.WOLF,
+			  EntityType.ZOMBIE_HORSE
+	  }));
+	  while (canBreed.size()>1) {
+		  breedingTable.put(canBreed.remove(0), canBreed.remove(r.nextInt(canBreed.size())));
+	  }
+	  if (canBreed.size()>0) {
+		  breedingTable.put(canBreed.get(0), canBreed.get(0));
+	  }
+  }
+  
 
   public void onEnable()
   {
     craftingrecipes = new ArrayList();
     smeltingrecipes = new ArrayList();
     shufflelist = new ArrayList();
+    archivedshufflelist = new ArrayList();
     shufflelist2 = new ArrayList();
     recipeStorage = new ArrayList();
     plugin = (Template)getPlugin(Template.class);
@@ -268,6 +380,7 @@ public class Template
     }
     ReadRecipeData();
     AddInDefaultRecipes();
+    setBreedingTable();
     
     for (String s : recipeTypeMap.keySet()) {
       Bukkit.getLogger().info(" Randomized " + recipeTypeMap.get(s) + " " + s + " recipes.");

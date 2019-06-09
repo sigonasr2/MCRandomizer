@@ -4,14 +4,22 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.entity.Ageable;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.entity.EntityBreedEvent;
+import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.inventory.CraftItemEvent;
 import org.bukkit.event.inventory.FurnaceSmeltEvent;
 import org.bukkit.event.inventory.PrepareItemCraftEvent;
@@ -20,24 +28,59 @@ import org.bukkit.inventory.Recipe;
 import org.bukkit.inventory.RecipeChoice;
 import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.inventory.ShapelessRecipe;
+import org.bukkit.metadata.FixedMetadataValue;
 
 import net.md_5.bungee.api.ChatColor;
 import scramble.plugin.Template;
 
 public class ExampleListener implements Listener {
+	
+	@EventHandler
+	public void onEntityBreed(EntityBreedEvent ev) {
+		//Bukkit.getLogger().info("Breeder is "+ev.getBreeder());
+		if (ev.getBreeder()!=null &&
+				ev.getBreeder() instanceof Player) {
+			ev.getEntity().remove();
+			if (ev.getFather()!=null &&
+					!ev.getFather().hasMetadata("hasBred") || Math.abs(ev.getFather().getWorld().getFullTime()-ev.getFather().getMetadata("hasBred").get(0).asLong())>1) {
+				SpawnRandomizedEntity(ev.getFather());
+			} else {
+				if (!ev.getMother().hasMetadata("hasBred") || Math.abs(ev.getMother().getWorld().getFullTime()-ev.getMother().getMetadata("hasBred").get(0).asLong())>1) {
+					SpawnRandomizedEntity(ev.getMother());
+				}
+			}
+			if (ev.getFather()!=null) {
+				ev.getFather().setMetadata("hasBred", new FixedMetadataValue(Template.getPlugin(),ev.getFather().getWorld().getFullTime()));
+				Bukkit.getLogger().info("Set father hasBred to "+ev.getFather().getMetadata("hasBred").get(0).asLong());
+			}
+			if (ev.getMother()!=null) {
+				ev.getMother().setMetadata("hasBred", new FixedMetadataValue(Template.getPlugin(),ev.getMother().getWorld().getFullTime()));
+				Bukkit.getLogger().info("Set mother hasBred to "+ev.getFather().getMetadata("hasBred").get(0).asLong());
+			}
+		}
+	}
+	
+	private void SpawnRandomizedEntity(LivingEntity ent) {
+		Entity baby = ent.getWorld().spawnEntity(ent.getLocation(), Template.breedingTable.get(ent.getType()));
+		if (baby instanceof Ageable) {
+			Ageable baby_ent = (Ageable)baby;
+			baby_ent.setBaby();
+		}
+	}
+
+	@EventHandler
+	public void onEntityDeath(EntityDeathEvent ev) {
+		if (Template.monsterDropTable.containsKey(ev.getEntityType())) {
+			if (Template.r.nextInt(100)<Template.randomChance) {
+				List<ItemStack> itemList = Template.monsterDropTable.get(ev.getEntityType());
+				ev.getDrops().add(itemList.get(Template.r.nextInt(itemList.size())));
+			}
+		}
+	}
 
 	@EventHandler
 	public void onBlockBreak(BlockBreakEvent event) {
-		/*
-		 * We get the player and make a variable to make it easier to access it when we
-		 * need to use it.
-		 */
 		//Player p = event.getPlayer();
-		/*
-		 * Here we cancel the event. This means that they can't break the block. In this
-		 * case, we send a message to the player saying they don't have the required
-		 * permission.
-		 */
 		/*if (!p.hasPermission("template.breakblocks")) {
 			p.sendMessage(Template.CHAT_PREFIX +  ChatColor.WHITE + " > " + ChatColor.RED + "You do not have permission to break blocks!");
 			event.setCancelled(true);
