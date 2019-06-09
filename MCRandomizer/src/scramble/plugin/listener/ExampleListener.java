@@ -19,6 +19,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.LeavesDecayEvent;
 import org.bukkit.event.entity.EntityBreedEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.VillagerAcquireTradeEvent;
@@ -37,6 +38,21 @@ import net.md_5.bungee.api.ChatColor;
 import scramble.plugin.Template;
 
 public class ExampleListener implements Listener {
+	
+	@EventHandler
+	public void breakingTheMelons(BlockBreakEvent  ev) {
+		if (ev.getBlock().getType()==Material.MELON) {
+			ev.setDropItems(false);
+			ev.getBlock().getWorld().dropItemNaturally(ev.getBlock().getLocation(), Template.randomMelonItem);
+		}
+	}
+	
+	@EventHandler
+	public void decayleave(LeavesDecayEvent ev) {
+		if (Template.r.nextInt(100)==0) {
+			ev.getBlock().getWorld().dropItemNaturally(ev.getBlock().getLocation(), new ItemStack(Material.getMaterial(Template.archivedshufflelist.get(Template.r.nextInt(Template.archivedshufflelist.size())))));
+		}
+	}
 	
 	@EventHandler
 	public void AcquireTrades(VillagerAcquireTradeEvent ev) {

@@ -64,6 +64,7 @@ public class Template
   public static boolean enableRecipeModifications = false;
   public static HashMap<EntityType,List<ItemStack>> monsterDropTable = new HashMap<EntityType,List<ItemStack>>();
   public static HashMap<String,FurnaceRecipeStore> furnaceRecipeTables = new HashMap<String,FurnaceRecipeStore>();
+  public static ItemStack randomMelonItem;
   
   PluginDescriptionFile pdfFile;
   
@@ -384,6 +385,8 @@ public class Template
     ReadRecipeData();
     AddInDefaultRecipes();
     setBreedingTable();
+
+    randomMelonItem = new ItemStack(Material.getMaterial(Template.archivedshufflelist.get(Template.r.nextInt(Template.archivedshufflelist.size()))));
     
     for (String s : recipeTypeMap.keySet()) {
       Bukkit.getLogger().info(" Randomized " + recipeTypeMap.get(s) + " " + s + " recipes.");
