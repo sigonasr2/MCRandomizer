@@ -218,8 +218,11 @@ public class Template
   }
 
 	public static int randomizeAmount() {
+		return randomizeAmount(4);
+	}
+	public static int randomizeAmount(int amt) {
 		int counter=1;
-		while (Template.r.nextInt(4)==0) {
+		while (Template.r.nextInt(amt)==0) {
 			counter++;
 		}
 		return counter;

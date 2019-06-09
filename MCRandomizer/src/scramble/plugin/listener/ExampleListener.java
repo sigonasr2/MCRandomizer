@@ -3,6 +3,7 @@ package scramble.plugin.listener;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -20,10 +21,12 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.EntityBreedEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.VillagerAcquireTradeEvent;
 import org.bukkit.event.inventory.CraftItemEvent;
 import org.bukkit.event.inventory.FurnaceSmeltEvent;
 import org.bukkit.event.inventory.PrepareItemCraftEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.MerchantRecipe;
 import org.bukkit.inventory.Recipe;
 import org.bukkit.inventory.RecipeChoice;
 import org.bukkit.inventory.ShapedRecipe;
@@ -34,6 +37,21 @@ import net.md_5.bungee.api.ChatColor;
 import scramble.plugin.Template;
 
 public class ExampleListener implements Listener {
+	
+	@EventHandler
+	public void AcquireTrades(VillagerAcquireTradeEvent ev) {
+		//Bukkit.getLogger().info(ev.getEntity()+" getting "+ev.getRecipe());
+		MerchantRecipe prev = ev.getRecipe();
+		MerchantRecipe newRecipe = new MerchantRecipe(new ItemStack(Material.getMaterial(Template.archivedshufflelist.get(Template.r.nextInt(Template.archivedshufflelist.size()))),Template.randomizeAmount(2)*Template.randomizeAmount(2)),
+				prev.getUses(),prev.getMaxUses(),true,prev.getVillagerExperience(),prev.getPriceMultiplier());
+		List<ItemStack> ingredients = new ArrayList<ItemStack>();
+		ingredients.add(new ItemStack(Material.getMaterial(Template.archivedshufflelist.get(Template.r.nextInt(Template.archivedshufflelist.size()))),Template.randomizeAmount()));
+		while (Template.r.nextInt(10)==0) {
+			ingredients.add(new ItemStack(Material.getMaterial(Template.archivedshufflelist.get(Template.r.nextInt(Template.archivedshufflelist.size()))),Template.randomizeAmount()));
+		}
+		newRecipe.setIngredients(ingredients);
+		ev.setRecipe(newRecipe);
+	}
 	
 	@EventHandler
 	public void onEntityBreed(EntityBreedEvent ev) {
