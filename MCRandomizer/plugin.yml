@@ -1,0 +1,8 @@
+main: scramble.plugin.Template
+name: MCRandomizer
+author: sig
+version: 1.0.0
+api-version: 1.13
+commands:
+  block:
+    description: Check a block's data.
