@@ -6,6 +6,7 @@ Ever wanted to play Minecraft with a brand new set of recipes and having to go t
 - **The Crafting Table Recipe** is untouched. Find some planks and get a crafting table to unlock 3x3 crafting.
 - Other events in the game may drop or give items that you may not normally expect.
 - Seeded adventures! Every world seed that you play on will have a different set of crafting rules. Enjoy new playthroughs on worlds as you try to unlock all recipes.
+- Use your knowledge of Minecraft and crafting recipes to discover items in the world. All regular item farming and harvesting rules still apply.
 - Compatibility with **Version 1.14.2** of Minecraft (Spigot Plugin for a Spigot server).
 
 ## To Be Added:
