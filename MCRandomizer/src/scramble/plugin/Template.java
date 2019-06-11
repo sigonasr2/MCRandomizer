@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,6 +13,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.Bukkit;
@@ -67,6 +69,7 @@ public class Template
   public static ItemStack randomMelonItem;
   public static int recipe_count=0;
   public static boolean finished=false;
+  public static int villager_count=0;
   
   PluginDescriptionFile pdfFile;
   
@@ -129,7 +132,7 @@ public class Template
 	              String[] splitter = s2.split(",");
 	              
 	
-	              List<Material> splitter2 = new ArrayList();
+	              List<Material> splitter2 = new ArrayList<Material>();
 	              for (int i = 1; i < splitter.length; i++) {
 	                Material m = Material.getMaterial(splitter[i]);
 	                
@@ -301,86 +304,166 @@ public class Template
 		  breedingTable.put(canBreed.get(0), canBreed.get(0));
 	  }
   }
-  
+
+  boolean IsAlphabeticallyAfter(String name, String name2, String compare2, String compare22) {
+		for (int i=0;i<name.length();i++) {
+			if (i<name.length() && i<name2.length()) {
+				if (name.charAt(i)<name2.charAt(i)) {
+					return false;
+				} else 
+				if (name.charAt(i)>name2.charAt(i)) {
+					return true;
+				}
+			} else {
+				break;
+			}
+		}
+		if (name.length()>name2.length()) {
+			return true;
+		} else 
+		if (name.length()<name2.length()) {
+			return false;
+		} else {
+			name=compare2;
+			name2=compare22;
+			for (int i=0;i<name.length();i++) {
+				if (i<name.length() && i<name2.length()) {
+					if (name.charAt(i)<name2.charAt(i)) {
+						return false;
+					} else 
+					if (name.charAt(i)>name2.charAt(i)) {
+						return true;
+					}
+				}
+			}
+			return false;
+		}
+	}
 
   public void onEnable()
   {
-    craftingrecipes = new ArrayList();
-    smeltingrecipes = new ArrayList();
-    shufflelist = new ArrayList();
-    archivedshufflelist = new ArrayList();
-    shufflelist2 = new ArrayList();
-    recipeStorage = new ArrayList();
+	//  Bukkit.getLogger().setLevel(Level.WARNING);
+	Bukkit.resetRecipes();
+    craftingrecipes = new ArrayList<String>();
+    smeltingrecipes = new ArrayList<String>();
+    shufflelist = new ArrayList<String>();
+    archivedshufflelist = new ArrayList<String>();
+    shufflelist2 = new ArrayList<ItemStack>();
+    recipeStorage = new ArrayList<RecipeStore>();
     plugin = (Template)getPlugin(Template.class);
     r = new Random(Bukkit.getWorld("world").getSeed());
-    List<Recipe> defaultRecipes = new ArrayList();
+    Bukkit.getLogger().info("Random seed is "+Bukkit.getWorld("world").getSeed());
+    LoadVillagerCount();
+    List<Recipe> defaultRecipes = new ArrayList<Recipe>();
     Iterator<Recipe> it = Bukkit.recipeIterator();
     while (it.hasNext()) {
-      Recipe r = (Recipe)it.next();
-      defaultRecipes.add(r);
-      shufflelist2.add(r.getResult());
-      Bukkit.getLogger().info("Found a recipe for " + r.getResult());
+      Recipe r = it.next();
+      boolean added=false;
+      /*if (r instanceof BlastingRecipe ||
+    		  r instanceof CampfireRecipe ||
+    		  r instanceof SmokingRecipe ||
+    		  r instanceof StonecuttingRecipe) {*/
+	      for (int i=0;i<shufflelist2.size();i++) {
+	    	  if (!IsAlphabeticallyAfter(r.getResult().getType().name(),shufflelist2.get(i).getType().name(),r.getClass().getName(),defaultRecipes.get(i).getClass().getName())) {
+	    		  //Bukkit.getLogger().info(r.getResult().getType().name()+" is not alphabetically after "+shufflelist2.get(i).getType().name()+". Inserting at position "+i);
+	    		  shufflelist2.add(i,r.getResult());
+	    	      defaultRecipes.add(i,r);
+	    		  added=true;
+	    		  break;
+	    	  }
+	      }
+	      if (!added) {
+	    	  if (shufflelist2.size()>0) {
+	    		  //Bukkit.getLogger().info(r.getResult().getType().name()+" is alphabetically after "+shufflelist2.get(shufflelist2.size()-1).getType().name()+". Inserting at the end.");
+	    	  }
+	    	  shufflelist2.add(r.getResult());
+		      defaultRecipes.add(r);
+	      }
+	      //Bukkit.getLogger().info("Found a recipe for " + r.getResult());
+	      //THIS LIST IS NOT SORTED. REQUIRES MANUAL SORTING.
+      //}
+    }
+    for (int i=0;i<shufflelist2.size();i++) {
+    	Bukkit.getLogger().info("Found a recipe for "+shufflelist2.get(i)+"|"+defaultRecipes.get(i).getResult());
     }
     Bukkit.clearRecipes();
-    HashMap<String, Integer> recipeTypeMap = new HashMap();
+    HashMap<String, Integer> recipeTypeMap = new HashMap<String, Integer>();
+    
+    int blastingrecipe = 0;
+    int campfirerecipe = 0;
+    int smokingrecipe = 0;
+    int stonecuttingrecipe = 0;
+    
+    for (int i=0;i<defaultRecipes.size();i++) {
+    	Bukkit.getLogger().info(i+": "+defaultRecipes.get(i).getResult() + " - "+defaultRecipes.get(i).getClass());
+    }
     
     while (shufflelist2.size() > 0) {
-      Recipe rr = (Recipe)defaultRecipes.get(r.nextInt(defaultRecipes.size()));
+      int recipe_id = r.nextInt(defaultRecipes.size());
+      Recipe rr = defaultRecipes.get(recipe_id);
+      Bukkit.getLogger().info("Adding recipe for "+shufflelist2.get(0)+" at recipe "+recipe_id);
 	  boolean modified=true;
-      try {
-        if ((rr instanceof BlastingRecipe)) {
-          BlastingRecipe br = (BlastingRecipe)rr;
-          BlastingRecipe newbr = new BlastingRecipe(br.getKey(), (ItemStack)shufflelist2.get(0), br.getInputChoice(), br.getExperience(), br.getCookingTime());
-          Bukkit.addRecipe(newbr);
-        }
-        else if ((rr instanceof CampfireRecipe)) {
-          CampfireRecipe br = (CampfireRecipe)rr;
-          CampfireRecipe newbr = new CampfireRecipe(br.getKey(), (ItemStack)shufflelist2.get(0), br.getInputChoice(), br.getExperience(), br.getCookingTime());
-          Bukkit.addRecipe(newbr);
-        }
-        /*else if ((rr instanceof FurnaceRecipe)) {
-          FurnaceRecipe br = (FurnaceRecipe)rr;
-          FurnaceRecipe newbr = new FurnaceRecipe(br.getKey(), (ItemStack)shufflelist2.get(0), br.getInputChoice(), br.getExperience(), br.getCookingTime());
-          Bukkit.addRecipe(newbr);
-        }*/
-        else if ((rr instanceof MerchantRecipe)) {
-          MerchantRecipe br = (MerchantRecipe)rr;
-          MerchantRecipe newbr = new MerchantRecipe((ItemStack)shufflelist2.get(0), br.getUses(), br.getMaxUses(), true, br.getVillagerExperience(), br.getPriceMultiplier());
-          Bukkit.addRecipe(newbr);
-        }
-        /*else if ((rr instanceof ShapedRecipe)) {
-          ShapedRecipe br = (ShapedRecipe)rr;
-          ShapedRecipe newbr = new ShapedRecipe((ItemStack)shufflelist2.get(0));
-          newbr.shape(br.getShape());
-          
-          for (Character c : br.getChoiceMap().keySet())
-          {
-            newbr.setIngredient(c.charValue(), (RecipeChoice)br.getChoiceMap().get(c));
-          }
-          Bukkit.addRecipe(newbr);
-        }
-        else if ((rr instanceof ShapelessRecipe)) {
-          ShapelessRecipe br = (ShapelessRecipe)rr;
-          ShapelessRecipe newbr = new ShapelessRecipe((ItemStack)shufflelist2.get(0));
-          for (ItemStack i : br.getIngredientList()) {
-            newbr.addIngredient(i.getType());
-          }
-          Bukkit.addRecipe(newbr);
-        }*/
-        else if ((rr instanceof SmokingRecipe)) {
-          SmokingRecipe br = (SmokingRecipe)rr;
-          SmokingRecipe newbr = new SmokingRecipe(br.getKey(), (ItemStack)shufflelist2.get(0), br.getInputChoice(), br.getExperience(), br.getCookingTime());
-          Bukkit.addRecipe(newbr);
-        }
-        else if ((rr instanceof StonecuttingRecipe)) {
-          StonecuttingRecipe br = (StonecuttingRecipe)rr;
-          StonecuttingRecipe newbr = new StonecuttingRecipe(br.getKey(), (ItemStack)shufflelist2.get(0), br.getInputChoice());
-          Bukkit.addRecipe(newbr);
-        } else {
-        	modified=false;
-        }
-      }
-      catch (IllegalStateException localIllegalStateException) {}
+      //int amt = Bukkit.getRecipesFor(shufflelist2.get(0)).size();
+	    if ((rr instanceof BlastingRecipe)) {
+	      BlastingRecipe br = (BlastingRecipe)rr;
+	      BlastingRecipe newbr = new BlastingRecipe(new NamespacedKey(plugin,"blasting_recipe"+shufflelist2.size()), shufflelist2.get(0), br.getInput().getType(), br.getExperience(), br.getCookingTime());
+	      Bukkit.addRecipe(newbr);
+	        Bukkit.getLogger().info(" BLASTING");
+	      blastingrecipe++;
+	    }
+	    else if ((rr instanceof CampfireRecipe)) {
+	      CampfireRecipe br = (CampfireRecipe)rr;
+	      CampfireRecipe newbr = new CampfireRecipe(new NamespacedKey(plugin,"campfire_recipe"+shufflelist2.size()), shufflelist2.get(0), br.getInput().getType(), br.getExperience(), br.getCookingTime());
+	      Bukkit.addRecipe(newbr);
+	        Bukkit.getLogger().info(" CAMPFIRE");
+	      campfirerecipe++;
+	    }
+	    /*else if ((rr instanceof FurnaceRecipe)) {
+	      FurnaceRecipe br = (FurnaceRecipe)rr;
+	      FurnaceRecipe newbr = new FurnaceRecipe(br.getKey(), (ItemStack)shufflelist2.get(0), br.getInputChoice(), br.getExperience(), br.getCookingTime());
+	      Bukkit.addRecipe(newbr);
+	    }*/
+	    else if ((rr instanceof MerchantRecipe)) {
+	      MerchantRecipe br = (MerchantRecipe)rr;
+	      MerchantRecipe newbr = new MerchantRecipe(shufflelist2.get(0), br.getUses(), br.getMaxUses(), true, br.getVillagerExperience(), br.getPriceMultiplier());
+	      Bukkit.addRecipe(newbr);
+	    }
+	    /*else if ((rr instanceof ShapedRecipe)) {
+	      ShapedRecipe br = (ShapedRecipe)rr;
+	      ShapedRecipe newbr = new ShapedRecipe((ItemStack)shufflelist2.get(0));
+	      newbr.shape(br.getShape());
+	      
+	      for (Character c : br.getChoiceMap().keySet())
+	      {
+	        newbr.setIngredient(c.charValue(), (RecipeChoice)br.getChoiceMap().get(c));
+	      }
+	      Bukkit.addRecipe(newbr);
+	    }
+	    else if ((rr instanceof ShapelessRecipe)) {
+	      ShapelessRecipe br = (ShapelessRecipe)rr;
+	      ShapelessRecipe newbr = new ShapelessRecipe((ItemStack)shufflelist2.get(0));
+	      for (ItemStack i : br.getIngredientList()) {
+	        newbr.addIngredient(i.getType());
+	      }
+	      Bukkit.addRecipe(newbr);
+	    }*/
+	    else if ((rr instanceof SmokingRecipe)) {
+	      SmokingRecipe br = (SmokingRecipe)rr;
+	      SmokingRecipe newbr = new SmokingRecipe(new NamespacedKey(plugin,"smoking_recipe"+shufflelist2.size()), shufflelist2.get(0), br.getInput().getType(), br.getExperience(), br.getCookingTime());
+	      Bukkit.addRecipe(newbr);
+	        Bukkit.getLogger().info(" SMOKING");
+	      smokingrecipe++;
+	    }
+	    else if ((rr instanceof StonecuttingRecipe)) {
+	      StonecuttingRecipe br = (StonecuttingRecipe)rr;
+	      StonecuttingRecipe newbr = new StonecuttingRecipe(new NamespacedKey(plugin,"stonecutting_recipe"+shufflelist2.size()), shufflelist2.get(0), br.getInput().getType());
+	    	Bukkit.addRecipe(newbr);
+	        Bukkit.getLogger().info(" STONECUTTING");
+		      stonecuttingrecipe++;
+	    } else {
+	        Bukkit.getLogger().info(" UNMODIFIED ("+rr.getClass().getName()+")");
+	    	modified=false;
+	    }
       
       if (modified) {
     	  recipeTypeMap.put(rr.getClass().getName(), Integer.valueOf(recipeTypeMap.containsKey(rr.getClass().getName()) ? ((Integer)recipeTypeMap.get(rr.getClass().getName())).intValue() + 1 : 1));
@@ -392,10 +475,16 @@ public class Template
     setBreedingTable();
 
     randomMelonItem = new ItemStack(Material.getMaterial(Template.archivedshufflelist.get(Template.r.nextInt(Template.archivedshufflelist.size()))));
-    
+
+
     for (String s : recipeTypeMap.keySet()) {
       Bukkit.getLogger().info(" Randomized " + recipeTypeMap.get(s) + " " + s + " recipes.");
     }
+    Bukkit.getLogger().info("");
+    Bukkit.getLogger().info("Blasting: "+blastingrecipe);
+    Bukkit.getLogger().info("Campefire: "+campfirerecipe);
+    Bukkit.getLogger().info("Smoking: "+smokingrecipe);
+    Bukkit.getLogger().info("Stonecutting: "+stonecuttingrecipe);
     
     PluginManager pm = getServer().getPluginManager();
     
@@ -405,4 +494,30 @@ public class Template
     
     finished=true;
   }
+
+	public static void LoadVillagerCount() {
+		File f = new File("villager_count");
+		if (f.exists()) {
+			try {
+				FileReader fr = new FileReader(f);
+				BufferedReader br = new BufferedReader(fr);
+				villager_count = Integer.parseInt(br.readLine());
+				Bukkit.getLogger().info(villager_count+" Villagers loaded.");
+				br.close();
+				fr.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	public static void IncreaseAndSaveVillagerCount() {
+		File f = new File("villager_count");
+		try {
+			FileWriter fw = new FileWriter(f);
+			fw.write((++villager_count)+"");
+			fw.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 }

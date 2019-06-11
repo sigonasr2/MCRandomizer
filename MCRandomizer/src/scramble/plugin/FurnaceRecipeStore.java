@@ -29,5 +29,5 @@ public class FurnaceRecipeStore implements RecipeStore{
 	public void setResultItem(String item) {
 		this.finalItem=item;
 	}
-	
+	//6,12,11,102
 }
