@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.RecipeChoice;
 import org.bukkit.inventory.RecipeChoice.MaterialChoice;
@@ -24,7 +25,7 @@ public class ShapedRecipeStore implements RecipeStore{
 
 	@Override
 	public void createRecipe() {
-		ShapedRecipe sr = new ShapedRecipe(new ItemStack(Material.getMaterial(finalItem),Template.randomizeAmount()));
+		ShapedRecipe sr = new ShapedRecipe(new NamespacedKey(Template.plugin,"shapedrecipe_"+(Template.recipe_count++)),new ItemStack(Material.getMaterial(finalItem),Template.randomizeAmount()));
 		sr.shape(shape);
 		for (Character c : ingredientsMap.keySet()) {
 			MaterialChoice m = ingredientsMap.get(c);

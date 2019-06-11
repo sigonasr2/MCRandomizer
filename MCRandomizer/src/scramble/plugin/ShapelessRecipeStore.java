@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.ShapelessRecipe;
 
@@ -14,7 +15,7 @@ public class ShapelessRecipeStore implements RecipeStore{
 
 	@Override
 	public void createRecipe() {
-		ShapelessRecipe sr = new ShapelessRecipe(new ItemStack(Material.getMaterial(finalItem),Template.randomizeAmount()));
+		ShapelessRecipe sr = new ShapelessRecipe(new NamespacedKey(Template.plugin,"shapelessrecipe_"+(Template.recipe_count++)),new ItemStack(Material.getMaterial(finalItem),Template.randomizeAmount()));
 		for (int i=0;i<craftingitems.size();i++) {
 			sr.addIngredient(Material.getMaterial(craftingitems.get(i)));
 			Bukkit.getLogger().info("  Added ingredient "+craftingitems.get(i));

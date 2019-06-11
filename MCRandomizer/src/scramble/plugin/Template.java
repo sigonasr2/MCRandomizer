@@ -65,6 +65,8 @@ public class Template
   public static HashMap<EntityType,List<ItemStack>> monsterDropTable = new HashMap<EntityType,List<ItemStack>>();
   public static HashMap<String,FurnaceRecipeStore> furnaceRecipeTables = new HashMap<String,FurnaceRecipeStore>();
   public static ItemStack randomMelonItem;
+  public static int recipe_count=0;
+  public static boolean finished=false;
   
   PluginDescriptionFile pdfFile;
   
@@ -222,8 +224,11 @@ public class Template
 		return randomizeAmount(4);
 	}
 	public static int randomizeAmount(int amt) {
+		return randomizeAmount(Template.r,amt);
+	}
+	public static int randomizeAmount(Random r, int amt) {
 		int counter=1;
-		while (Template.r.nextInt(amt)==0) {
+		while (r.nextInt(amt)==0) {
 			counter++;
 		}
 		return counter;
@@ -397,5 +402,7 @@ public class Template
     getCommand("block").setExecutor(new ExampleCommand());
     
     pm.registerEvents(new ExampleListener(), this);
+    
+    finished=true;
   }
 }

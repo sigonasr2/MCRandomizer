@@ -17,7 +17,7 @@ public class FurnaceRecipeStore implements RecipeStore{
 
 	@Override
 	public void createRecipe() {
-		FurnaceRecipe rec = new FurnaceRecipe(new NamespacedKey(Template.plugin,"furnace"+System.nanoTime()),new ItemStack(Material.getMaterial(finalItem)),new RecipeChoice.MaterialChoice(craftingitems),
+		FurnaceRecipe rec = new FurnaceRecipe(new NamespacedKey(Template.plugin,"furnace"+(Template.recipe_count++)),new ItemStack(Material.getMaterial(finalItem)),new RecipeChoice.MaterialChoice(craftingitems),
 				Template.r.nextInt(100)+1f,Template.r.nextInt(81)+20);
 		Bukkit.getLogger().info("Added recipe for "+finalItem);
 		Bukkit.getLogger().info("Furnace recipe w/");

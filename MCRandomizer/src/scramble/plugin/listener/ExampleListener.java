@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -39,6 +40,10 @@ import scramble.plugin.Template;
 
 public class ExampleListener implements Listener {
 	
+	final static String[] consonants = new String[]{"B","C","D","F","G","H","J","K","L","M","N","P","Q","R","S","T","V","W","X","Y","Z"};
+	final static String[] vowels = new String[]{"A","E","I","O","U","Y"};
+	
+	
 	@EventHandler
 	public void breakingTheMelons(BlockBreakEvent  ev) {
 		if (ev.getBlock().getType()==Material.MELON) {
@@ -54,16 +59,44 @@ public class ExampleListener implements Listener {
 		}
 	}
 	
+	public String GenerateRandomName() {
+		StringBuilder name = new StringBuilder();
+		boolean consonant=Template.r.nextInt(2)==0;
+		int strlength = Template.r.nextInt(Template.randomizeAmount(2)+5);
+		boolean first=false;
+		while ((strlength--)>0) {
+			if (consonant) {
+				String letter = consonants[Template.r.nextInt(consonants.length)];
+				name.append(letter);
+				if (Template.r.nextInt(4)==0 && Math.abs(name.length()-strlength)<=3) {
+					name.append(letter);
+				}
+			} else {
+				name.append(vowels[Template.r.nextInt(vowels.length)]);
+			}
+			consonant=!consonant;
+		}
+		return name.toString();
+	}
+	
 	@EventHandler
 	public void AcquireTrades(VillagerAcquireTradeEvent ev) {
+		if (!Template.finished) {
+			ev.setCancelled(true);
+			return;
+		}
 		//Bukkit.getLogger().info(ev.getEntity()+" getting "+ev.getRecipe());
+		if (ev.getEntity().getCustomName()==null || ev.getEntity().getCustomName().length()==0) {
+			ev.getEntity().setCustomName(GenerateRandomName());
+		}
+		Random ff = new Random(ev.getEntity().getCustomName().hashCode());
 		MerchantRecipe prev = ev.getRecipe();
-		MerchantRecipe newRecipe = new MerchantRecipe(new ItemStack(Material.getMaterial(Template.archivedshufflelist.get(Template.r.nextInt(Template.archivedshufflelist.size()))),Template.randomizeAmount(2)*Template.randomizeAmount(2)),
+		MerchantRecipe newRecipe = new MerchantRecipe(new ItemStack(Material.getMaterial(Template.archivedshufflelist.get(ff.nextInt(Template.archivedshufflelist.size()))),Template.randomizeAmount(ff,2)*Template.randomizeAmount(ff,2)),
 				prev.getUses(),prev.getMaxUses(),true,prev.getVillagerExperience(),prev.getPriceMultiplier());
 		List<ItemStack> ingredients = new ArrayList<ItemStack>();
-		ingredients.add(new ItemStack(Material.getMaterial(Template.archivedshufflelist.get(Template.r.nextInt(Template.archivedshufflelist.size()))),Template.randomizeAmount()));
-		if (Template.r.nextInt(10)==0) {
-			ingredients.add(new ItemStack(Material.getMaterial(Template.archivedshufflelist.get(Template.r.nextInt(Template.archivedshufflelist.size()))),Template.randomizeAmount()));
+		ingredients.add(new ItemStack(Material.getMaterial(Template.archivedshufflelist.get(ff.nextInt(Template.archivedshufflelist.size()))),Template.randomizeAmount(ff,4)));
+		if (ff.nextInt(10)==0) {
+			ingredients.add(new ItemStack(Material.getMaterial(Template.archivedshufflelist.get(ff.nextInt(Template.archivedshufflelist.size()))),Template.randomizeAmount(ff,4)));
 		}
 		newRecipe.setIngredients(ingredients);
 		ev.setRecipe(newRecipe);
@@ -95,7 +128,12 @@ public class ExampleListener implements Listener {
 	}
 	
 	private void SpawnRandomizedEntity(LivingEntity ent) {
+		Bukkit.getLogger().info("ent: "+ent);
+		Bukkit.getLogger().info("entloc: "+ent.getLocation());
+		Bukkit.getLogger().info("template_breedingtable: "+Template.breedingTable);
+		Bukkit.getLogger().info("enttype: "+ent.getType());
 		Entity baby = ent.getWorld().spawnEntity(ent.getLocation(), Template.breedingTable.get(ent.getType()));
+		Bukkit.getLogger().info("baby: "+baby);
 		if (baby instanceof Ageable) {
 			Ageable baby_ent = (Ageable)baby;
 			baby_ent.setBaby();
